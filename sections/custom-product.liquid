@@ -1,0 +1,556 @@
+<section
+  id="main-{{ section.id }}"
+  class="page-width section-{{ section.id }}-padding"
+  data-section="{{ section.id }}"
+>
+  <div class="product-section grid grid--1-col grid--3-col-tablet">
+    <div class="grid__item product__media-wrapper">
+      <div class="product-media-container media-type-image">
+        <div class="product__media media">
+          <img
+            src="{{ product.featured_image | image_url: width: 381 }}"
+            alt="{{ product.title }}"
+            loading="lazy"
+            width="381"
+            height="381"
+            class="product-image image-magnify-none"
+          >
+        </div>
+      </div>
+    </div>
+    <div class="grid__item product__info-wrapper ">
+      <h1 class="product-title">{{ product.title }}</h1>
+      <div class="product-variants grid">
+        {% for variant in product.variants %}
+          <button
+            class="variant-button {% if variant.id == product.selected_or_first_available_variant.id %} selected{% endif %}"
+            type="button"
+            data-variant-id="{{ variant.id }}"
+            data-variant-title="{{ variant.title }}"
+            data-variant-available="{{ variant.available }}"
+            data-variant-sku="{{ variant.sku }}"
+            data-variant-price="{{ variant.price | money }}"
+            {% if variant.available == false %}
+              disabled
+            {% endif %}
+            aria-label="{{ variant.title }}"
+          >
+            <span class="variant-title">{{ variant.title }}</span>
+            <span class="variant-price">{{ variant.price | money }}</span>
+          </button>
+        {% endfor %}
+      </div>
+      <div class="product-description">
+        {{ product.metafields.custom.short_description | metafield_tag }}
+      </div>
+    </div>
+    <div class="grid__item product_atc_wrapper">
+      <div class="product-price-stock-div border-bottom">
+        <div class="sku-div">
+          <p
+            class="product__sku no-js-hidden caption-with-letter-spacing {% if product.selected_or_first_available_variant.sku.size == 0 %} visibility-hidden{% endif %}"
+            id="Sku-{{ section.id }}"
+            role="status"
+          >
+            <span class="visually-hidden">{{ 'products.product.sku' | t }}:</span>
+            {{- product.selected_or_first_available_variant.sku -}}
+          </p>
+        </div>
+        <div class="price-div">
+          {% if product.compare_at_price > product.price %}
+            <span class="price--compare">{{ product.compare_at_price | money }}</span>
+          {% endif %}
+          <span class="price--current">{{ product.price | money }}</span>
+          <div class="product-available">
+            {% if product.available %}
+              <span class="available-label">In Stock</span>
+            {% else %}
+              <span class="available-label">Out of Stock</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="product-add-to-cart grid border-bottom">
+        <div class="product-quantity product-form__input product-form__quantity">
+          {%- assign cart_qty = cart | item_count_for_variant: product.selected_or_first_available_variant.id -%}
+          {%- assign product_form_id = 'product-form-' | append: section.id -%}
+          <quantity-input class="quantity" data-url="{{ product.url }}" data-section="{{ section.id }}">
+            <button class="quantity__button" name="minus" type="button">
+              <span class="visually-hidden">
+                {{- 'products.product.quantity.decrease' | t: product: product.title | escape -}}
+              </span>
+              <span class="svg-wrapper">
+                {{- 'icon-minus.svg' | inline_asset_content -}}
+              </span>
+            </button>
+            <input
+              class="quantity__input"
+              type="number"
+              name="quantity"
+              id="Quantity-{{ section.id }}"
+              data-cart-quantity="{{ cart_qty }}"
+              data-min="{{ product.selected_or_first_available_variant.quantity_rule.min }}"
+              min="{{ product.selected_or_first_available_variant.quantity_rule.min }}"
+              {% if product.selected_or_first_available_variant.quantity_rule.max != null %}
+                data-max="{{ product.selected_or_first_available_variant.quantity_rule.max }}"
+                max="{{ product.selected_or_first_available_variant.quantity_rule.max }}"
+              {% endif %}
+              step="{{ product.selected_or_first_available_variant.quantity_rule.increment }}"
+              value="{{ product.selected_or_first_available_variant.quantity_rule.min }}"
+              form="{{ product_form_id }}"
+            >
+            <button class="quantity__button" name="plus" type="button">
+              <span class="visually-hidden">
+                {{- 'products.product.quantity.increase' | t: product: product.title | escape -}}
+              </span>
+              <span class="svg-wrapper">
+                {{- 'icon-plus.svg' | inline_asset_content -}}
+              </span>
+            </button>
+          </quantity-input>
+        </div>
+        <form method="post" action="{{ routes.cart_add_url }}" id="add-to-cart-form">
+          <input type="hidden" name="id" value="{{ product.variants.first.id }}">
+          <!-- Quantity selector -->
+          <input type="hidden" name="quantity" id="quantity-input" value="1" min="1" class="quantity-field">
+
+          <button type="submit" class="btn btn--primary atc-btn hover-ellipse-btn">
+            <span class="hover-bg"></span>
+            <span class="btn-text">Add to Cart</span>
+          </button>
+        </form>
+      </div>
+      <div class="product-wishlist">
+        <button class="wishlist-btn" type="button">
+          <img
+            src="{{ 'Vector-2.svg' | asset_url }}"
+            width="16"
+            height="16"
+            alt="Expand"
+            class="accordion__icon"
+          >
+          Add To Wishlist
+        </button>
+        <a href="#" class="favourites-link">Show my favourites</a>
+      </div>
+    </div>
+  </div>
+  <div class="product-description-details grid--1-col">
+    <div class="accordion">
+      {% if product.description != blank %}
+        <details>
+          <summary class="accordion__title">
+            Product Description
+            <span class="accordion-icon"></span>
+          </summary>
+          <div class="accordion__content">
+            {{ product.description }}
+          </div>
+        </details>
+      {% endif %}
+
+      {% if product.metafields.specification != blank %}
+        <details>
+          <summary class="accordion__title">
+            Specification
+            <span class="accordion-icon"></span>
+          </summary>
+          <div class="accordion__content">
+            <table class="specification-table">
+              <tbody>
+                {% assign specs = product.metafields.specification %}
+                {% for key in specs %}
+                  <tr>
+                    <th style="text-transform: capitalize;">{{ key[0] | replace: '_', ' ' }}</th>
+                    <td>{{ key[1] }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      {% endif %}
+
+      {% if product.metafields.custom.data_sheet != blank %}
+        {% assign datasheet_raw = product.metafields.custom.data_sheet.value %}
+        {% assign datasheet = datasheet_raw | json_parse %}
+        <details>
+          <summary class="accordion__title">
+            Product Data Sheets
+            {% assign count = 0 %}
+            {% for _ in datasheet %}
+              {% assign count = count | plus: 1 %}
+            {% endfor %}
+            <span class="datasheet_count">
+              {{- count }}
+              <span class="accordion-icon"></span
+            ></span>
+          </summary>
+          <div class="accordion__content">
+            {% for item in datasheet %}
+              <div class="datasheet_div">
+                <img
+                  src="{{ 'pdf.svg' | asset_url }}"
+                  width="20"
+                  height="20"
+                  alt="Expand"
+                  class="accordion__icon"
+                >
+                <a href="{{ item.url }}" target="_blank" rel="noopener"> {{ item.name }} </a>
+              </div>
+            {% endfor %}
+          </div>
+        </details>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Custom Product Section",
+  "settings": [],
+  "presets": [
+    {
+      "name": "Custom Product",
+      "category": "Product"
+    }
+  ]
+}
+{% endschema %}
+
+{% style %}
+  .product-image {
+    position: relative !important;
+  }
+  .product-title {
+    font-family: 'Eurostile Demi';
+    font-weight: 500;
+    font-size: 24px;
+    line-height: 32px;
+  }
+  .product-description {
+    font-family: 'MyriadPro-Regular';
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 24px;
+  }
+  .product_atc_wrapper {
+    background: #ffffff;
+    border: 1px solid #eaeaea;
+    padding: 30px;
+  }
+  .price-div .price--compare {
+    font-family: 'MyriadPro-Regular';
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 24px;
+    color: #999999;
+    text-decoration: line-through;
+  }
+  .price-div .price--current {
+    font-family: 'Eurostile Demi';
+    font-weight: 500;
+    font-size: 32px;
+    line-height: 46px;
+    text-transform: uppercase;
+    color: #006747;
+  }
+  .product-available .available-label {
+    font-family: 'MyriadPro-Regular';
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 28px;
+    color: #006747;
+  }
+  .sku-div {
+    border-radius: 8px;
+    opacity: 1;
+    padding: 4px 8px;
+    background: #f7f7f8;
+    float: right;
+  }
+  .sku-div p {
+    font-family: 'MyriadPro-Regular';
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 16px;
+    padding: 0 2px;
+    margin: 0;
+    color: var(--color-text-accent-gray, #3f3f50);
+  }
+  .variant-button {
+    border-radius: 2px;
+    border-width: 1px;
+    padding: 10px 12px;
+    background: #f9fafb;
+    border: 1px solid #e4e7ec;
+    cursor: pointer;
+    width: 170px;
+    height: 62px;
+  }
+  button.variant-button.selected {
+    border: 1px solid #51f7ce;
+    background: #effefa;
+  }
+  .variant-button:hover {
+    background: #e4e7ec;
+  }
+  .variant-button .variant-title {
+    display: block;
+    font-family: 'Inter';
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    text-align: center;
+  }
+  .variant-button .variant-price {
+    font-family: 'Myriad-Pro';
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 20px;
+    text-align: center;
+    display: block;
+  }
+
+  .border-bottom {
+    border-bottom: 1px solid #eaeaea;
+    padding: 20px 0;
+  }
+
+  .product-wishlist {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .wishlist-btn {
+    border-radius: 2px;
+    padding: 10px 16px;
+    background: #13997c;
+    color: #ffffff;
+    display: flex;
+    border: none;
+    width: 172px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+  }
+
+  .favourites-link {
+    font-family: 'MyriadPro-Regular';
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 16px;
+    color: #575757;
+    padding-top: 10px;
+  }
+
+  .hover-ellipse-btn {
+    position: relative;
+    overflow: hidden;
+    padding: 12px 20px;
+    font-size: 16px;
+    color: #000;
+    background: #ffba00;
+    border: none;
+    border-radius: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    z-index: 1;
+  }
+
+  .hover-ellipse-btn .btn-text {
+    position: relative;
+    z-index: 2;
+  }
+
+  .hover-ellipse-btn .hover-bg {
+    content: '';
+    position: absolute;
+    bottom: -50%;
+    left: 50%;
+    transform: translateX(-50%) scaleY(0);
+    width: 200%;
+    height: 200%;
+    background-color: #ffe399;
+    border-radius: 50%;
+    z-index: 1;
+    opacity: 0;
+    transition: transform 0.5s ease, opacity 0.3s ease;
+  }
+
+  .hover-ellipse-btn:hover .hover-bg {
+    transform: translateX(-50%) scaleY(1);
+    opacity: 1;
+  }
+  .accordion__title {
+    font-family: 'MyriadPro-Semibold';
+    font-weight: 600;
+    font-size: 24px;
+    line-height: 28px;
+    color: #0f172a;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+  }
+  .accordion-icon {
+    width: 12px;
+    height: 12px;
+    display: inline-block;
+    position: relative;
+  }
+
+  .accordion-icon::before,
+  .accordion-icon::after {
+    content: '';
+    position: absolute;
+    background-color: #000;
+    transition: 0.3s ease;
+  }
+
+  .accordion-icon::before {
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    transform: translateY(-50%);
+  }
+
+  .accordion-icon::after {
+    left: 50%;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    transform: translateX(-50%);
+  }
+
+  /* When details is open (minus sign only) */
+  details[open] .accordion-icon::after {
+    height: 0;
+    opacity: 0;
+  }
+  .accordion__content p strong {
+    font-family: 'MyriadPro-Semibold';
+    font-weight: 600;
+    font-size: 20px;
+    line-height: 28px;
+    color: #0f172a;
+  }
+  .accordion__content .subheading {
+    font-family: 'MyriadPro-Regular';
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 24px;
+    color: #3e4545;
+  }
+  .accordion__content p {
+    font-family: 'MyriadPro-Semibold';
+    font-weight: 600;
+    font-size: 20px;
+    line-height: 28px;
+    color: #0f172a;
+  }
+  .accordion__content ul {
+    padding-left: 1.5rem;
+    margin: 1rem 0;
+    list-style: disc;
+  }
+  .accordion__content ul li::marker {
+    color: #8a8aa3;
+    font-size: 2rem;
+    width: 10px;
+    height: 10px;
+  }
+  .specification-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: sans-serif;
+    font-size: 14px;
+    margin: 1rem 0;
+    border: 1px solid #ddd;
+  }
+  .specification-table th {
+    font-family: 'MyriadPro-Semibold';
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 24px;
+  }
+  .specification-table th,
+  .specification-table td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+
+  .specification-table thead {
+    background-color: #0f172a;
+    color: #fff;
+  }
+
+  .specification-table tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
+  }
+
+  .specification-table tbody tr:nth-child(even) {
+    background-color: #ffffff;
+  }
+
+  .specification-table tbody tr:hover {
+    background-color: #f1f5f9;
+  }
+  .accordion__content a {
+    font-family: 'MyriadPro-Regular';
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 150%;
+    letter-spacing: 0%;
+    text-decoration: underline;
+    color: #575757;
+  }
+  .datasheet_div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .accordion__content {
+    padding-top: 20px;
+  }
+{% endstyle %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const variantButtons = document.querySelectorAll('.variant-button');
+    variantButtons.forEach((button) => {
+      button.addEventListener('click', function () {
+        const variantId = this.getAttribute('data-variant-id');
+        const previouslySelected = document.querySelector('.variant-button.selected');
+        if (previouslySelected) {
+          previouslySelected.classList.remove('selected');
+        }
+        this.classList.add('selected');
+        document.querySelector('.price--current').textContent = button.getAttribute('data-variant-price');
+        document.querySelector('#add-to-cart-form input[name="id"]').value = variantId;
+        document.querySelector('#Sku-{{ section.id }}').textContent = button.getAttribute('data-variant-sku');
+        const availableLabel = document.querySelector('.product-available .available-label');
+        if (button.getAttribute('data-variant-available') === 'true') {
+          availableLabel.textContent = 'In Stock';
+          availableLabel.classList.remove('out-of-stock');
+          availableLabel.classList.add('in-stock');
+        } else {
+          availableLabel.textContent = 'Out of Stock';
+          availableLabel.classList.remove('in-stock');
+          availableLabel.classList.add('out-of-stock');
+        }
+      });
+    });
+  });
+</script>
